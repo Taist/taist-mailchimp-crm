@@ -21,7 +21,6 @@ MailchimpBlock = React.createFactory React.createClass
     console.log 'onClick'
 
   render: ->
-    console.log Paper
     React.createElement Paper, { zDepth: 1, rounded: false, style: padding: 8 },
       div {},
         React.createElement RaisedButton, {

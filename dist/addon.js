@@ -31,7 +31,39 @@ app = {
       });
     };
   },
-  actions: {}
+  actions: {},
+  mailchimpAPI: {
+    request: function() {
+      var deferred, options, url;
+      url = 'https://us11.api.mailchimp.com/3.0/lists';
+      options = {
+        type: 'json',
+        method: 'get',
+        contentType: 'application/json',
+        headers: {
+          Authorization: 'Basic ' + btoa(app.mailchimpAPI.APIUser + ":" + app.mailchimpAPI.APIKey)
+        }
+      };
+      deferred = Q.defer();
+      app.api.proxy.jQueryAjax(url, '', options, function(error, response) {
+        if (error) {
+          return deferred.reject(error);
+        } else {
+          return deferred.resolve(response.result);
+        }
+      });
+      return deferred.promise;
+    },
+    APIUser: 'kiddylab',
+    APIKey: 'df2d045d24b32563023c886c8d51774c-us11',
+    getLists: function() {
+      return app.mailchimpAPI.request().then(function(result) {
+        return console.log(result);
+      })["catch"](function(error) {
+        return console.log('proxy error', error);
+      });
+    }
+  }
 };
 
 module.exports = app;
@@ -140,7 +172,6 @@ MailchimpBlock = React.createFactory(React.createClass({
     return console.log('onClick');
   },
   render: function() {
-    console.log(Paper);
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,

@@ -33,4 +33,62 @@ app =
 
   actions: {}
 
+  mailchimpAPI:
+    request: () ->
+      url = 'https://us11.api.mailchimp.com/3.0/lists'
+
+      options =
+        type: 'json'
+        method: 'get'
+        contentType: 'application/json'
+        headers:
+          Authorization: 'Basic ' + btoa "#{app.mailchimpAPI.APIUser}:#{app.mailchimpAPI.APIKey}"
+
+      deferred = Q.defer()
+
+      app.api.proxy.jQueryAjax url, '', options, (error, response) ->
+        if error
+          deferred.reject error
+        else
+          deferred.resolve response.result
+      deferred.promise
+
+    APIUser: 'kiddylab'
+    APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
+
+    getLists: ->
+      app.mailchimpAPI.request()
+      .then (result) ->
+        console.log result
+      .catch (error) ->
+        #Use stub instead of real function
+        console.log 'proxy error', error
+      #   sendFBRequest = sendFBRequestStub
+      #   'FB_PROXY_ERROR'
+
+      # reqwest {
+      #   url: 'https://us11.api.mailchimp.com/3.0/lists'
+      #   type: 'json'
+      #   method: 'get'
+      #   contentType: 'application/json'
+      #   headers:
+      #     Authorization: 'Basic ' + btoa "#{app.mailchimpAPI.APIKey}:#{app.mailchimpAPI.APIUser}"
+      # }
+      # .then (resp) ->
+      #   console.log resp.content
+      # .fail (err, msg) ->
+      #   console.log resp.content
+
+  # us11.api.mailchimp.com/3.0/lists
+  # freshBooksAPI.getCreds()
+  # .then (creds) ->
+  #   Q.when $.ajax
+  #     url: creds.url
+  #     headers:
+  #       Authorization: 'Basic ' + btoa "#{creds.token}:"
+  #     method: 'POST'
+  #     data: XMLMapping.dump requestData, throwErrors: true, header: true
+  #     dataType: 'text'
+
+
 module.exports = app
