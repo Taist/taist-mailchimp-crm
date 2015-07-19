@@ -1,0 +1,8 @@
+{
+  "id": "trello-moysklad",
+  "siteName": "Mailchimp",
+  "title": "Integration",
+  "js": "addon.js",
+  "shortDescription": "Add CRM user to Mailchimp list",
+  "siteRegexp": "kiddylab\\.ru"
+}
