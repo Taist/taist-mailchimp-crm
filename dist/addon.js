@@ -10,7 +10,8 @@ React = require('react');
 extend = require('react/lib/Object.assign');
 
 appData = {
-  lists: []
+  lists: [],
+  error: null
 };
 
 app = {
@@ -40,9 +41,35 @@ app = {
   render: function() {
     var MailchimpBlock;
     MailchimpBlock = require('./react/mailchimpBlock');
-    return React.render(MailchimpBlock(appData), app.container);
+    return React.render(MailchimpBlock({
+      data: appData,
+      actions: app.actions
+    }), app.container);
   },
-  actions: {},
+  actions: {
+    onSubscribe: function(subscriptionId) {
+      return app.mailchimpAPI.subscribe(subscriptionId, app.appAPI.getMember());
+    },
+    onResetError: function() {
+      appData.error = null;
+      return app.render();
+    }
+  },
+  appAPI: {
+    getMember: function() {
+      return {
+        email_address: 'john.doe@kiddylab.ru',
+        marge_fields: {
+          FNAME: 'John',
+          LNAME: 'Doe'
+        }
+      };
+    },
+    setError: function(errorMessage) {
+      appData.error = errorMessage;
+      return app.render();
+    }
+  },
   mailchimpAPI: {
     APIUser: 'kiddylab',
     APIKey: 'df2d045d24b32563023c886c8d51774c-us11',
@@ -54,19 +81,31 @@ app = {
       dc = (ref = this.APIKey.split('-')) != null ? ref[1] : void 0;
       return "https://" + dc + ".api.mailchimp.com/3.0/" + path;
     },
-    sendRequest: function(path) {
-      var deferred, options, url;
+    getRequest: function(path) {
+      return this.sendRequest(path);
+    },
+    postRequest: function(path, data) {
+      return this.sendRequest(path, {
+        data: JSON.stringify(data),
+        method: 'post'
+      });
+    },
+    sendRequest: function(path, options) {
+      var deferred, requestOptions, url;
+      if (options == null) {
+        options = {};
+      }
       url = this.getAPIAddress(path);
-      options = {
+      requestOptions = extend({
         type: 'json',
         method: 'get',
         contentType: 'application/json',
         headers: {
           Authorization: 'Basic ' + btoa(this.APIUser + ":" + this.APIKey)
         }
-      };
+      }, options);
       deferred = Q.defer();
-      app.api.proxy.jQueryAjax(url, '', options, function(error, response) {
+      app.api.proxy.jQueryAjax(url, '', requestOptions, function(error, response) {
         if (error) {
           return deferred.reject(error);
         } else {
@@ -76,11 +115,22 @@ app = {
       return deferred.promise;
     },
     getLists: function() {
-      return this.sendRequest('lists').then(function(result) {
+      return this.getRequest('lists').then(function(result) {
         appData.lists = result.lists || [];
         return app.render();
       })["catch"](function(error) {
         return console.log('proxy error', error);
+      });
+    },
+    subscribe: function(subscriptionId, user) {
+      var path;
+      path = "lists/" + subscriptionId + "/members";
+      return this.postRequest(path, extend(user, {
+        status: 'subscribed'
+      }))["catch"](function(error) {
+        var responseBody;
+        responseBody = JSON.parse(error.response.body);
+        return app.appAPI.setError(responseBody.detail);
       });
     }
   }
@@ -89,11 +139,11 @@ app = {
 module.exports = app;
 
 },{"./react/mailchimpBlock":2,"q":133,"react":310,"react/lib/DOMProperty":148,"react/lib/Object.assign":166}],2:[function(require,module,exports){
-var MailchimpBlock, Paper, RaisedButton, React, SelectField, ThemeManager, button, div, injectTapEventPlugin, mui, ref;
+var MailchimpBlock, Paper, RaisedButton, React, SelectField, SvgIcon, ThemeManager, button, div, injectTapEventPlugin, mui, path, ref;
 
 React = require('react');
 
-ref = React.DOM, div = ref.div, button = ref.button;
+ref = React.DOM, div = ref.div, button = ref.button, path = ref.path;
 
 mui = require('material-ui');
 
@@ -101,7 +151,7 @@ ThemeManager = new mui.Styles.ThemeManager();
 
 ThemeManager.setTheme(ThemeManager.types.LIGHT);
 
-Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField;
+Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon;
 
 injectTapEventPlugin = require('react-tap-event-plugin');
 
@@ -122,21 +172,57 @@ MailchimpBlock = React.createFactory(React.createClass({
     };
   },
   onClick: function() {
-    return console.log('onClick', this.state);
+    var base;
+    if (this.state.selectValue) {
+      return typeof (base = this.props.actions).onSubscribe === "function" ? base.onSubscribe(this.state.selectValue) : void 0;
+    }
   },
   onSelectMailchimpList: function(event) {
     return this.setState({
       selectValue: event.target.value
     });
   },
+  onResetError: function(event) {
+    var base;
+    return typeof (base = this.props.actions).onResetError === "function" ? base.onResetError() : void 0;
+  },
   render: function() {
+    var contentWidth;
+    contentWidth = 480;
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
       style: {
+        margin: 8,
+        padding: 8,
+        width: contentWidth,
+        boxSizing: 'content-box'
+      }
+    }, this.props.data.error != null ? React.createElement(Paper, {
+      zDepth: 2,
+      rounded: false,
+      style: {
+        position: 'relative',
         padding: 8
       }
-    }, div({}, div({
+    }, div({
+      style: {
+        position: 'absolute',
+        right: 8
+      }
+    }, React.createElement(SvgIcon, {
+      viewBox: '0 0 1792 1792',
+      color: mui.Styles.Colors.red200,
+      hoverColor: mui.Styles.Colors.red900,
+      onClick: this.onResetError,
+      style: {
+        height: 16,
+        width: 16,
+        cursor: 'pointer'
+      }
+    }, path({
+      d: "M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"
+    }))), this.props.data.error) : void 0, div({}, div({
       className: 'selectFieldWrapper',
       style: {
         display: 'inline-block'
@@ -146,17 +232,12 @@ MailchimpBlock = React.createFactory(React.createClass({
       floatingLabelText: 'Select Mailchimp List',
       valueMember: 'id',
       displayMember: 'name',
-      menuItems: this.props.lists,
+      menuItems: this.props.data.lists,
       onChange: this.onSelectMailchimpList,
       style: {
-        width: 320
+        width: contentWidth
       }
-    })), div({
-      style: {
-        display: 'inline-block',
-        width: 16
-      }
-    }), React.createElement(RaisedButton, {
+    }))), div({}, React.createElement(RaisedButton, {
       label: 'Button',
       disabled: this.state.selectValue == null,
       onClick: this.onClick

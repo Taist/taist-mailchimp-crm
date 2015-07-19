@@ -6,6 +6,7 @@ extend = require 'react/lib/Object.assign'
 
 appData = {
   lists: []
+  error: null
 }
 
 app =
@@ -36,12 +37,29 @@ app =
           updatedData
 
     app.container = document.createElement 'div'
-    
+
   render: ->
     MailchimpBlock = require './react/mailchimpBlock'
-    React.render ( MailchimpBlock appData ), app.container
+    React.render ( MailchimpBlock data: appData, actions: app.actions ), app.container
 
-  actions: {}
+  actions:
+    onSubscribe: (subscriptionId) ->
+      app.mailchimpAPI.subscribe subscriptionId, app.appAPI.getMember()
+
+    onResetError: ->
+      appData.error = null
+      app.render()
+
+  appAPI:
+    getMember: ->
+      email_address: 'john.doe@kiddylab.ru'
+      marge_fields:
+        FNAME: 'John'
+        LNAME: 'Doe'
+
+    setError: (errorMessage) ->
+      appData.error = errorMessage
+      app.render()
 
   mailchimpAPI:
     APIUser: 'kiddylab'
@@ -55,19 +73,26 @@ app =
 
       "https://#{dc}.api.mailchimp.com/3.0/#{path}"
 
-    sendRequest: (path) ->
+    getRequest: (path) ->
+      @sendRequest path
+
+    postRequest: (path, data) ->
+      @sendRequest path, { data: JSON.stringify(data), method: 'post' }
+
+    sendRequest: (path, options = {}) ->
       url = @getAPIAddress path
 
-      options =
+      requestOptions = extend {
         type: 'json'
         method: 'get'
         contentType: 'application/json'
         headers:
           Authorization: 'Basic ' + btoa "#{@APIUser}:#{@APIKey}"
+      }, options
 
       deferred = Q.defer()
 
-      app.api.proxy.jQueryAjax url, '', options, (error, response) ->
+      app.api.proxy.jQueryAjax url, '', requestOptions, (error, response) ->
         if error
           deferred.reject error
         else
@@ -76,13 +101,19 @@ app =
       deferred.promise
 
     getLists: ->
-      @sendRequest('lists')
+      @getRequest('lists')
       .then (result) ->
         appData.lists = result.lists or []
         app.render()
       .catch (error) ->
         #Use stub instead of real function
         console.log 'proxy error', error
-      #   sendFBRequest = sendFBRequestStub
+
+    subscribe: (subscriptionId, user) ->
+      path = "lists/#{subscriptionId}/members"
+      @postRequest path, extend user, { status: 'subscribed' }
+      .catch (error) ->
+        responseBody = JSON.parse error.response.body
+        app.appAPI.setError responseBody.detail
 
 module.exports = app
