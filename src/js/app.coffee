@@ -4,9 +4,13 @@ require('react/lib/DOMProperty').ID_ATTRIBUTE_NAME = 'data-vr-mc-crm-reactid'
 React = require 'react'
 extend = require 'react/lib/Object.assign'
 
+md5 = require('blueimp-md5').md5
+
 appData = {
   lists: []
   error: null
+  subscriptions: []
+  contentWidth: 480
 }
 
 app =
@@ -45,6 +49,13 @@ app =
   actions:
     onSubscribe: (subscriptionId) ->
       app.mailchimpAPI.subscribe subscriptionId, app.appAPI.getMember()
+      .then ->
+        app.mailchimpAPI.getLists()
+
+    onUnsubscribe: (subscriptionId) ->
+      app.mailchimpAPI.unsubscribe subscriptionId, app.appAPI.getMember()
+      .then ->
+        app.mailchimpAPI.getLists()
 
     onResetError: ->
       appData.error = null
@@ -79,6 +90,9 @@ app =
     postRequest: (path, data) ->
       @sendRequest path, { data: JSON.stringify(data), method: 'post' }
 
+    patchRequest: (path, data) ->
+      @sendRequest path, { data: JSON.stringify(data), method: 'patch' }
+
     sendRequest: (path, options = {}) ->
       url = @getAPIAddress path
 
@@ -100,18 +114,56 @@ app =
 
       deferred.promise
 
+    indexOf: (listId) ->
+      index = -1
+      appData.subscriptions.forEach (s, i) -> if s.list_id is listId then index = i
+      index
+
+    insertSubscription: (subscription) ->
+      idx = @indexOf(subscription.list_id)
+      if idx > -1
+        appData.subscriptions[idx] = subscription
+      else
+        appData.subscriptions.push subscription
+
+
     getLists: ->
-      @getRequest('lists')
-      .then (result) ->
+      @getRequest 'lists'
+      .then (result) =>
         appData.lists = result.lists or []
         app.render()
+        result.lists.map (list) =>
+          @getMember list.id, app.appAPI.getMember()
+          .then (listData) =>
+            @insertSubscription extend { name: list.name }, listData
+            app.render()
+
       .catch (error) ->
         #Use stub instead of real function
         console.log 'proxy error', error
 
+    getUserId: (email) ->
+      md5 email.toLowerCase()
+
+    getMember: (subscriptionId, user) ->
+      path = "lists/#{subscriptionId}/members/#{@getUserId(user.email_address)}"
+      @getRequest path
+
     subscribe: (subscriptionId, user) ->
-      path = "lists/#{subscriptionId}/members"
-      @postRequest path, extend user, { status: 'subscribed' }
+      if @indexOf(subscriptionId) > -1
+        path = "lists/#{subscriptionId}/members/#{@getUserId(user.email_address)}"
+        method = 'patchRequest'
+      else
+        path = "lists/#{subscriptionId}/members"
+        method = 'postRequest'
+      @[method] path, extend user, { status: 'subscribed' }
+      .catch (error) ->
+        responseBody = JSON.parse error.response.body
+        app.appAPI.setError responseBody.detail
+
+    unsubscribe: (subscriptionId, user) ->
+      path = "lists/#{subscriptionId}/members/#{@getUserId(user.email_address)}"
+      @patchRequest path, extend user, { status: 'unsubscribed' }
       .catch (error) ->
         responseBody = JSON.parse error.response.body
         app.appAPI.setError responseBody.detail

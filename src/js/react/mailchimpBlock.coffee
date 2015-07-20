@@ -6,7 +6,7 @@ mui = require 'material-ui'
 ThemeManager = new mui.Styles.ThemeManager()
 ThemeManager.setTheme ThemeManager.types.LIGHT
 
-{ Paper, RaisedButton, SelectField, SvgIcon } = mui
+{ Paper, RaisedButton, SelectField, SvgIcon, List, ListItem, ListDivider } = mui
 
 injectTapEventPlugin = require 'react-tap-event-plugin'
 injectTapEventPlugin()
@@ -23,27 +23,31 @@ MailchimpBlock = React.createFactory React.createClass
   getChildContext: ->
     muiTheme: ThemeManager.getCurrentTheme()
 
-  onClick: ->
+  onSubscribe: ->
     if @state.selectValue
       @props.actions.onSubscribe? @state.selectValue
-    # console.log 'onClick', @state
 
-  onSelectMailchimpList: (event) ->
+  onUnsubscribe: ->
+    if @state.selectValue
+      @props.actions.onUnsubscribe? @state.selectValue
+
+  onChangeMailchimpList: (event) ->
     this.setState { selectValue: event.target.value }
+
+  onSelectSubscription: (listId) ->
+    this.setState { selectValue: listId }
 
   onResetError: (event) ->
     @props.actions.onResetError?()
 
   render: ->
-    contentWidth = 480
-
     React.createElement Paper, {
       zDepth: 1
       rounded: false
       style:
         margin: 8
         padding: 8
-        width: contentWidth
+        width: @props.data.contentWidth
         boxSizing: 'content-box'
     },
       if @props.data.error?
@@ -65,8 +69,23 @@ MailchimpBlock = React.createFactory React.createClass
                 width: 16
                 cursor: 'pointer'
             },
-              path d: "M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z"
+              path d: 'M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z'
           @props.data.error
+
+      if @props.data.subscriptions.length > 0
+        React.createElement List, {},
+          @props.data.subscriptions.map (subscription) =>
+            React.createElement ListItem, {
+              key: subscription.list_id
+              primaryText: subscription.name
+              secondaryText: subscription.status
+              onClick: => @onSelectSubscription subscription.list_id
+            }
+      else
+        React.createElement List, {},
+          React.createElement ListItem, { primaryText: 'Active subscriptions not found' }
+
+      React.createElement ListDivider, {}
 
       div {},
         div { className: 'selectFieldWrapper', style: display: 'inline-block' },
@@ -76,16 +95,25 @@ MailchimpBlock = React.createFactory React.createClass
             valueMember: 'id'
             displayMember: 'name'
             menuItems: @props.data.lists
-            onChange: @onSelectMailchimpList
+            onChange: @onChangeMailchimpList
             style:
-              width: contentWidth
+              width: @props.data.contentWidth
           }
 
       div {},
-        React.createElement RaisedButton, {
-          label: 'Button'
-          disabled: !@state.selectValue?
-          onClick: @onClick
-        }
+        if @props.data.subscriptions.filter((s) =>
+            (s.status is 'subscribed') and (s.list_id is @state.selectValue)
+          )[0]?
+          React.createElement RaisedButton, {
+            label: 'unsubscribe'
+            disabled: !@state.selectValue?
+            onClick: @onUnsubscribe
+          }
+        else
+          React.createElement RaisedButton, {
+            label: 'subscribe'
+            disabled: !@state.selectValue?
+            onClick: @onSubscribe
+          }
 
 module.exports = MailchimpBlock
