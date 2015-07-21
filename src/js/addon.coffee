@@ -5,11 +5,15 @@ style.type = 'text/css'
 
 innerHTML = ''
 
-innerHTML += '\n.selectFieldWrapper div[tabindex="0"] div { text-overflow: ellipsis; overflow-x: hidden; }';
+# zoho styles
+innerHTML += '\n.zohoContainer { margin-left: 2.5%; padding-top: 8px; width: 95%; }'
+innerHTML += '\n.zohoContainer * { font-size: 16px; font-family: "Roboto", sans-serif; }'
 
-innerHTML += '\n.subscriptionsInfo { display: none; opacity: 0.01; }'
+innerHTML += '\n.selectFieldWrapper div[tabindex="0"] div { text-overflow: ellipsis; overflow-x: hidden; }'
 
-innerHTML += '\n.subscriptionsInfo.isExpanded { display: block; opacity: 1; transition: display 0s, opacity 5s ease-in;}'
+innerHTML += '\n.subscriptionsInfo { overflow: hidden; max-height: 0px; transition: max-height .5s ease-in-out; }'
+
+innerHTML += '\n.subscriptionsInfo.isExpanded { max-height: 1000px; opacity: 1; transition: max-height .5s ease-in-out; }'
 
 style.innerHTML = innerHTML
 document.getElementsByTagName('head')[0].appendChild style
@@ -19,11 +23,14 @@ addonEntry =
     window._app = app
     app.init _taistApi
 
-    # DOMObserver = require './helpers/domObserver'
-    # app.elementObserver = new DOMObserver()
+    DOMObserver = require './helpers/domObserver'
+    app.elementObserver = new DOMObserver()
 
-    container = document.querySelector '#notReact'
-    container.appendChild app.container
+    app.elementObserver.waitElement '[id^="emailspersonality_"]', (section) ->
+      id = section.id.replace 'emailspersonality_', ''
+      container = document.getElementById id
+      container.appendChild app.container
+    # container = document.querySelector '#notReact'
 
     app.mailchimpAPI.getLists()
 

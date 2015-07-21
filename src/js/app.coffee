@@ -10,7 +10,7 @@ appData = {
   lists: []
   error: null
   subscriptions: []
-  contentWidth: 480
+  contentWidth: 700
 }
 
 app =
@@ -40,7 +40,9 @@ app =
         .then ->
           updatedData
 
-    app.container = document.createElement 'div'
+    div = document.createElement 'div'
+    div.className = 'zohoContainer'
+    app.container = div
 
   render: ->
     MailchimpBlock = require './react/mailchimpBlock'
