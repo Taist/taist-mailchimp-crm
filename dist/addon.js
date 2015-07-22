@@ -70,12 +70,16 @@ app = {
     }
   },
   appAPI: {
+    member: {},
     getMember: function() {
-      return {
-        email_address: 'john.doe@kiddylab.ru',
+      return this.member;
+    },
+    setMember: function(email, firstName, lastName) {
+      return this.member = {
+        email_address: email,
         marge_fields: {
-          FNAME: 'John',
-          LNAME: 'Doe'
+          FNAME: firstName,
+          LNAME: lastName
         }
       };
     },
@@ -85,10 +89,7 @@ app = {
     }
   },
   mailchimpAPI: {
-    creds: {
-      APIUser: 'kiddylab',
-      APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
-    },
+    creds: {},
     setCreds: function(creds) {
       return app.exapi.setCompanyData('mailchimpCreds', creds);
     },
@@ -189,7 +190,7 @@ app = {
       });
     },
     getUserId: function(email) {
-      return md5(email.toLowerCase());
+      return md5(email != null ? email.toLowerCase() : void 0);
     },
     getMember: function(subscriptionId, user) {
       var path;
@@ -383,9 +384,6 @@ MailchimpBlock = React.createFactory(React.createClass({
     });
   },
   render: function() {
-    var ref1, ref2;
-    console.log((ref1 = this.props.data.subscriptions[0]) != null ? ref1.name : void 0);
-    console.log((ref2 = this.props.data.lists[0]) != null ? ref2.name : void 0);
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
@@ -41820,13 +41818,22 @@ addonEntry = {
     }
     if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
       return app.mailchimpAPI.getCreds().then(function() {
+        var email, firstName, fullName, lastName, pageData;
         app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
           var container, id;
           id = section.id.replace('emailspersonality_', '');
           container = document.getElementById(id);
           return container.appendChild(app.container);
         });
+        pageData = JSON.parse(document.querySelector('#mapValues').value);
+        fullName = pageData['Full Name'];
+        firstName = pageData['First Name'];
+        lastName = fullName.slice(firstName.length + 1);
+        email = pageData.priEmail;
+        app.appAPI.setMember(email, firstName, lastName);
         return app.mailchimpAPI.getLists();
+      })["catch"](function(error) {
+        return console.log(error);
       });
     }
   }

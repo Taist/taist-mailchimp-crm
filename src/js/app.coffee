@@ -64,20 +64,24 @@ app =
       app.render()
 
   appAPI:
+    member: {}
+
     getMember: ->
-      email_address: 'john.doe@kiddylab.ru'
-      marge_fields:
-        FNAME: 'John'
-        LNAME: 'Doe'
+      @member
+
+    setMember: (email, firstName, lastName) ->
+      @member =
+        email_address: email
+        marge_fields:
+          FNAME: firstName
+          LNAME: lastName
 
     setError: (errorMessage) ->
       appData.error = errorMessage
       app.render()
 
   mailchimpAPI:
-    creds:
-      APIUser: 'kiddylab'
-      APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
+    creds: {}
 
     setCreds: (creds) ->
       app.exapi.setCompanyData 'mailchimpCreds', creds
@@ -159,7 +163,7 @@ app =
         console.log 'proxy error', error
 
     getUserId: (email) ->
-      md5 email.toLowerCase()
+      md5 email?.toLowerCase()
 
     getMember: (subscriptionId, user) ->
       path = "lists/#{subscriptionId}/members/#{@getUserId(user.email_address)}"

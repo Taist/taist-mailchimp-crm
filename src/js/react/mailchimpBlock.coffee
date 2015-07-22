@@ -55,9 +55,6 @@ MailchimpBlock = React.createFactory React.createClass
     @setState isExpanded: !@state.isExpanded
 
   render: ->
-    console.log @props.data.subscriptions[0]?.name
-    console.log @props.data.lists[0]?.name
-
     React.createElement Paper, {
       zDepth: 1
       rounded: false
