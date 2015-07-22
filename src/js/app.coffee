@@ -75,14 +75,23 @@ app =
       app.render()
 
   mailchimpAPI:
-    APIUser: 'kiddylab'
-    APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
+    creds:
+      APIUser: 'kiddylab'
+      APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
+
+    setCreds: (creds) ->
+      app.exapi.setCompanyData 'mailchimpCreds', creds
+
+    getCreds: () ->
+      app.exapi.getCompanyData 'mailchimpCreds'
+      .then (creds) =>
+        @creds = creds or {}
 
     getAPIAddress: (path) ->
-      unless @APIKey
+      unless @creds.APIKey
         return null
 
-      dc = @APIKey.split('-')?[1]
+      dc = @creds.APIKey.split('-')?[1]
 
       "https://#{dc}.api.mailchimp.com/3.0/#{path}"
 
@@ -103,7 +112,7 @@ app =
         method: 'get'
         contentType: 'application/json'
         headers:
-          Authorization: 'Basic ' + btoa "#{@APIUser}:#{@APIKey}"
+          Authorization: 'Basic ' + btoa "#{@creds.APIUser}:#{@creds.APIKey}"
       }, options
 
       deferred = Q.defer()
@@ -130,10 +139,15 @@ app =
 
 
     getLists: ->
+      unless @creds?.APIKey?
+        app.appAPI.setError 'Please setup Mailchimp API key to start'
+        return Q.resolve()
+
       @getRequest 'lists'
       .then (result) =>
         appData.lists = result.lists or []
         app.render()
+
         result.lists.map (list) =>
           @getMember list.id, app.appAPI.getMember()
           .then (listData) =>

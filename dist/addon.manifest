@@ -4,5 +4,5 @@
   "title": "Integration",
   "js": "addon.js",
   "shortDescription": "Add CRM user to Mailchimp list",
-  "siteRegexp": "crm\\.zoho\\.com"
+  "siteRegexp": "(crm\\.zoho\\.com|\\.admin\\.mailchimp\\.com)"
 }

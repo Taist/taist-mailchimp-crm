@@ -85,14 +85,26 @@ app = {
     }
   },
   mailchimpAPI: {
-    APIUser: 'kiddylab',
-    APIKey: 'df2d045d24b32563023c886c8d51774c-us11',
+    creds: {
+      APIUser: 'kiddylab',
+      APIKey: 'df2d045d24b32563023c886c8d51774c-us11'
+    },
+    setCreds: function(creds) {
+      return app.exapi.setCompanyData('mailchimpCreds', creds);
+    },
+    getCreds: function() {
+      return app.exapi.getCompanyData('mailchimpCreds').then((function(_this) {
+        return function(creds) {
+          return _this.creds = creds || {};
+        };
+      })(this));
+    },
     getAPIAddress: function(path) {
       var dc, ref;
-      if (!this.APIKey) {
+      if (!this.creds.APIKey) {
         return null;
       }
-      dc = (ref = this.APIKey.split('-')) != null ? ref[1] : void 0;
+      dc = (ref = this.creds.APIKey.split('-')) != null ? ref[1] : void 0;
       return "https://" + dc + ".api.mailchimp.com/3.0/" + path;
     },
     getRequest: function(path) {
@@ -121,7 +133,7 @@ app = {
         method: 'get',
         contentType: 'application/json',
         headers: {
-          Authorization: 'Basic ' + btoa(this.APIUser + ":" + this.APIKey)
+          Authorization: 'Basic ' + btoa(this.creds.APIUser + ":" + this.creds.APIKey)
         }
       }, options);
       deferred = Q.defer();
@@ -154,6 +166,11 @@ app = {
       }
     },
     getLists: function() {
+      var ref;
+      if (((ref = this.creds) != null ? ref.APIKey : void 0) == null) {
+        app.appAPI.setError('Please setup Mailchimp API key to start');
+        return Q.resolve();
+      }
       return this.getRequest('lists').then((function(_this) {
         return function(result) {
           appData.lists = result.lists || [];
@@ -385,12 +402,7 @@ MailchimpBlock = React.createFactory(React.createClass({
         d: 'M1664 1504v-768q-32 36-69 66-268 206-426 338-51 43-83 67t-86.5 48.5-102.5 24.5h-2q-48 0-102.5-24.5t-86.5-48.5-83-67q-158-132-426-338-37-30-69-66v768q0 13 9.5 22.5t22.5 9.5h1472q13 0 22.5-9.5t9.5-22.5zm0-1051v-24.5l-.5-13-3-12.5-5.5-9-9-7.5-14-2.5h-1472q-13 0-22.5 9.5t-9.5 22.5q0 168 147 284 193 152 401 317 6 5 35 29.5t46 37.5 44.5 31.5 50.5 27.5 43 9h2q20 0 43-9t50.5-27.5 44.5-31.5 46-37.5 35-29.5q208-165 401-317 54-43 100.5-115.5t46.5-131.5zm128-37v1088q0 66-47 113t-113 47h-1472q-66 0-113-47t-47-113v-1088q0-66 47-113t113-47h1472q66 0 113 47t47 113z'
       })),
       rightIcon: this.state.isExpanded ? faChevronUp : faChevronDown
-    })), div({
-      className: "subscriptionsInfo " + (this.state.isExpanded ? 'isExpanded' : ''),
-      style: {
-        padding: 2
-      }
-    }, this.props.data.error != null ? React.createElement(Paper, {
+    })), this.props.data.error != null ? React.createElement(Paper, {
       zDepth: 2,
       rounded: false,
       style: {
@@ -414,7 +426,12 @@ MailchimpBlock = React.createFactory(React.createClass({
       }
     }, path({
       d: 'M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z'
-    }))), this.props.data.error) : void 0, this.props.data.subscriptions.length > 0 ? React.createElement(List, {}, this.props.data.subscriptions.map((function(_this) {
+    }))), this.props.data.error) : void 0, div({
+      className: "subscriptionsInfo " + (this.state.isExpanded ? 'isExpanded' : ''),
+      style: {
+        padding: 4
+      }
+    }, this.props.data.subscriptions.length > 0 ? React.createElement(List, {}, this.props.data.subscriptions.map((function(_this) {
       return function(subscription) {
         return React.createElement(ListItem, {
           key: subscription.list_id,
@@ -41721,7 +41738,7 @@ module.exports = warning;
 module.exports = require('./lib/React');
 
 },{"./lib/React":170}],"addon":[function(require,module,exports){
-var addonEntry, app, innerHTML, style;
+var addonEntry, app, innerHTML, style, updateMailchimpInterface, updateMailchimpKey;
 
 app = require('./app');
 
@@ -41745,6 +41762,41 @@ style.innerHTML = innerHTML;
 
 document.getElementsByTagName('head')[0].appendChild(style);
 
+updateMailchimpKey = function(action, key) {
+  var creds, elem;
+  creds = {};
+  if (action === 'enable') {
+    elem = document.querySelector('[aria-label="Account name"]');
+    creds = {
+      APIKey: key,
+      APIUser: elem.innerText
+    };
+  }
+  return app.mailchimpAPI.setCreds(creds).then(function() {
+    return app.mailchimpAPI.getCreds();
+  }).then(function(creds) {
+    return updateMailchimpInterface();
+  });
+};
+
+updateMailchimpInterface = function() {
+  return app.mailchimpAPI.getCreds().then(function(creds) {
+    return [].slice.call(document.querySelectorAll('.taistAPIKey')).forEach(function(link) {
+      if ((creds != null ? creds.APIKey : void 0) === link.dataset.apikey) {
+        link.innerText = 'Disable Taist integration';
+        return link.onclick = function() {
+          return updateMailchimpKey('disable', link.dataset.apikey);
+        };
+      } else {
+        link.innerText = 'Use for Taist integration';
+        return link.onclick = function() {
+          return updateMailchimpKey('enable', link.dataset.apikey);
+        };
+      }
+    });
+  });
+};
+
 addonEntry = {
   start: function(_taistApi, entryPoint) {
     var DOMObserver;
@@ -41752,13 +41804,31 @@ addonEntry = {
     app.init(_taistApi);
     DOMObserver = require('./helpers/domObserver');
     app.elementObserver = new DOMObserver();
-    app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
-      var container, id;
-      id = section.id.replace('emailspersonality_', '');
-      container = document.getElementById(id);
-      return container.appendChild(app.container);
-    });
-    return app.mailchimpAPI.getLists();
+    if (location.href.match(/\.admin\.mailchimp\.com\/account\/api\//i)) {
+      app.elementObserver.waitElement('[id^="apikey-"]', function(input) {
+        var a, apikey, div;
+        apikey = input.value;
+        a = document.createElement('a');
+        a.dataset.apikey = apikey;
+        a.className = 'taistAPIKey';
+        a.style.cursor = 'pointer';
+        div = document.createElement('div');
+        div.appendChild(a);
+        input.parentNode.appendChild(div);
+        return updateMailchimpInterface();
+      });
+    }
+    if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
+      return app.mailchimpAPI.getCreds().then(function() {
+        app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
+          var container, id;
+          id = section.id.replace('emailspersonality_', '');
+          container = document.getElementById(id);
+          return container.appendChild(app.container);
+        });
+        return app.mailchimpAPI.getLists();
+      });
+    }
   }
 };
 
