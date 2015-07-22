@@ -188,18 +188,19 @@ app = {
       return this.getRequest('lists').then((function(_this) {
         return function(result) {
           appData.lists = result.lists || [];
-          app.render();
           return result.lists.map(function(list) {
-            return _this.getMember(list.id, app.appAPI.getMember()).then(function(listData) {
-              _this.insertSubscription(extend({
+            return Q.all(_this.getMember(list.id, app.appAPI.getMember()).then(function(listData) {
+              return _this.insertSubscription(extend({
                 name: list.name
               }, listData));
+            })["catch"](function() {})).then(function() {
               return app.render();
-            })["catch"](function() {});
+            });
           });
         };
       })(this))["catch"](function(error) {
         var responseBody;
+        console.log('getLists error', error);
         responseBody = JSON.parse(error.response.body);
         return app.appAPI.setError(responseBody.detail);
       });
@@ -322,7 +323,7 @@ DOMObserver = (function() {
 module.exports = DOMObserver;
 
 },{}],3:[function(require,module,exports){
-var List, ListDivider, ListItem, MailchimpBlock, Paper, RaisedButton, React, SelectField, SvgIcon, ThemeManager, button, div, faChevronDown, faChevronUp, injectTapEventPlugin, mui, path, ref;
+var List, ListDivider, ListItem, MailchimpBlock, Paper, RaisedButton, React, SelectField, SvgIcon, Table, ThemeManager, button, div, injectTapEventPlugin, mui, path, ref;
 
 React = require('react');
 
@@ -334,28 +335,16 @@ ThemeManager = new mui.Styles.ThemeManager();
 
 ThemeManager.setTheme(ThemeManager.types.LIGHT);
 
-Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon, List = mui.List, ListItem = mui.ListItem, ListDivider = mui.ListDivider;
+Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon, List = mui.List, ListItem = mui.ListItem, ListDivider = mui.ListDivider, Table = mui.Table;
 
 injectTapEventPlugin = require('react-tap-event-plugin');
 
 injectTapEventPlugin();
 
-faChevronUp = React.createElement(SvgIcon, {
-  viewBox: '0 0 1792 1792'
-}, path({
-  d: 'M1683 1331l-166 165q-19 19-45 19t-45-19l-531-531-531 531q-19 19-45 19t-45-19l-166-165q-19-19-19-45.5t19-45.5l742-741q19-19 45-19t45 19l742 741q19 19 19 45.5t-19 45.5z'
-}));
-
-faChevronDown = React.createElement(SvgIcon, {
-  viewBox: '0 0 1792 1792'
-}, path({
-  d: 'M1683 808l-742 741q-19 19-45 19t-45-19l-742-741q-19-19-19-45.5t19-45.5l166-165q19-19 45-19t45 19l531 531 531-531q19-19 45-19t45 19l166 165q19 19 19 45.5t-19 45.5z'
-}));
-
 MailchimpBlock = React.createFactory(React.createClass({
   getInitialState: function() {
     return {
-      isExpanded: false,
+      isExpanded: true,
       selectValue: null
     };
   },
@@ -393,12 +382,37 @@ MailchimpBlock = React.createFactory(React.createClass({
     var base;
     return typeof (base = this.props.actions).onResetError === "function" ? base.onResetError() : void 0;
   },
-  toggleControl: function() {
-    return this.setState({
-      isExpanded: !this.state.isExpanded
-    });
-  },
   render: function() {
+    var ref1, tableData;
+    tableData = (ref1 = this.props.data.lists) != null ? typeof ref1.map === "function" ? ref1.map((function(_this) {
+      return function(list) {
+        var ref2, ref3, ref4, subscriptions;
+        subscriptions = (ref2 = _this.props.data.subscriptions) != null ? typeof ref2.filter === "function" ? ref2.filter(function(s) {
+          return s.list_id === list.id;
+        }) : void 0 : void 0;
+        return {
+          selected: ((ref3 = subscriptions[0]) != null ? ref3.status : void 0) === 'subscribed',
+          name: {
+            style: {
+              paddingLeft: 0
+            },
+            content: div({}, div({}, list.name), ((ref4 = subscriptions[0]) != null ? ref4.status : void 0) != null ? div({
+              style: {
+                fontSize: 14,
+                fontStyle: 'normal',
+                fontVariant: 'normal',
+                fontWeight: 400,
+                lineHeight: '16px',
+                height: 16,
+                marginTop: 4,
+                color: mui.Styles.Colors.grey600
+              }
+            }, subscriptions[0].status) : void 0)
+          }
+        };
+      };
+    })(this)) : void 0 : void 0;
+    console.log(tableData);
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
@@ -407,14 +421,12 @@ MailchimpBlock = React.createFactory(React.createClass({
         boxSizing: 'content-box'
       }
     }, React.createElement(List, {}, React.createElement(ListItem, {
-      onClick: this.toggleControl,
       primaryText: 'Mailchimp subscriptions',
       leftIcon: React.createElement(SvgIcon, {
         viewBox: '0 0 1792 1792'
       }, path({
         d: 'M1664 1504v-768q-32 36-69 66-268 206-426 338-51 43-83 67t-86.5 48.5-102.5 24.5h-2q-48 0-102.5-24.5t-86.5-48.5-83-67q-158-132-426-338-37-30-69-66v768q0 13 9.5 22.5t22.5 9.5h1472q13 0 22.5-9.5t9.5-22.5zm0-1051v-24.5l-.5-13-3-12.5-5.5-9-9-7.5-14-2.5h-1472q-13 0-22.5 9.5t-9.5 22.5q0 168 147 284 193 152 401 317 6 5 35 29.5t46 37.5 44.5 31.5 50.5 27.5 43 9h2q20 0 43-9t50.5-27.5 44.5-31.5 46-37.5 35-29.5q208-165 401-317 54-43 100.5-115.5t46.5-131.5zm128-37v1088q0 66-47 113t-113 47h-1472q-66 0-113-47t-47-113v-1088q0-66 47-113t113-47h1472q66 0 113 47t47 113z'
-      })),
-      rightIcon: this.state.isExpanded ? faChevronUp : faChevronDown
+      }))
     })), this.props.data.error != null ? React.createElement(Paper, {
       zDepth: 2,
       rounded: false,
@@ -439,45 +451,15 @@ MailchimpBlock = React.createFactory(React.createClass({
       }
     }, path({
       d: 'M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z'
-    }))), this.props.data.error) : void 0, div({
-      className: "subscriptionsInfo " + (this.state.isExpanded ? 'isExpanded' : ''),
-      style: {
-        padding: 4
-      }
-    }, this.props.data.subscriptions.length > 0 ? React.createElement(List, {}, this.props.data.subscriptions.map((function(_this) {
-      return function(subscription) {
-        return React.createElement(ListItem, {
-          key: subscription.list_id,
-          primaryText: subscription.name,
-          secondaryText: subscription.status
-        });
-      };
-    })(this))) : React.createElement(List, {}, React.createElement(ListItem, {
-      primaryText: 'Active subscriptions not found'
-    })), React.createElement(ListDivider, {}), div({}, div({
-      className: 'selectFieldWrapper'
-    }, React.createElement(SelectField, {
-      ref: 'subscriptionSelector',
-      value: this.state.selectValue,
-      floatingLabelText: 'Select Mailchimp List',
-      valueMember: 'id',
-      displayMember: 'name',
-      menuItems: this.props.data.lists,
-      onChange: this.onChangeMailchimpList,
-      fullWidth: true
-    }))), div({}, this.props.data.subscriptions.filter((function(_this) {
-      return function(s) {
-        return (s.status === 'subscribed') && (s.list_id === _this.state.selectValue);
-      };
-    })(this))[0] != null ? React.createElement(RaisedButton, {
-      label: 'unsubscribe',
-      disabled: this.state.selectValue == null,
-      onClick: this.onUnsubscribe
-    }) : React.createElement(RaisedButton, {
-      label: 'subscribe',
-      disabled: this.state.selectValue == null,
-      onClick: this.onSubscribe
-    }))));
+    }))), this.props.data.error) : void 0, React.createElement(Table, {
+      columnOrder: ['name'],
+      rowData: tableData,
+      selectable: true,
+      multiSelectable: true,
+      preScanRowData: true,
+      deselectOnClickaway: false,
+      showRowHover: true
+    }));
   }
 }));
 
@@ -41770,6 +41752,8 @@ innerHTML += '\n.selectFieldWrapper div[tabindex="0"] div { text-overflow: ellip
 innerHTML += '\n.subscriptionsInfo { overflow: hidden; max-height: 0px; transition: max-height .5s ease-in-out; }';
 
 innerHTML += '\n.subscriptionsInfo.isExpanded { max-height: 1000px; opacity: 1; transition: max-height .5s ease-in-out; }';
+
+innerHTML += '\n.subscriptionsInfo td { box-sizing: border-box; }';
 
 style.innerHTML = innerHTML;
 

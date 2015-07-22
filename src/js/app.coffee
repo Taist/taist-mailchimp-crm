@@ -161,20 +161,22 @@ app =
       @getRequest 'lists'
       .then (result) =>
         appData.lists = result.lists or []
-        app.render()
 
         result.lists.map (list) =>
-          @getMember list.id, app.appAPI.getMember()
-          .then (listData) =>
-            @insertSubscription extend { name: list.name }, listData
+          Q.all(
+            @getMember list.id, app.appAPI.getMember()
+            .then (listData) =>
+              @insertSubscription extend { name: list.name }, listData
+            .catch ->
+              # just supress error
+          ).then () ->
+            # console.log 'before render', appData
             app.render()
-          .catch ->
-            # just supress error
 
       .catch (error) ->
+        console.log 'getLists error', error
         responseBody = JSON.parse error.response.body
         app.appAPI.setError responseBody.detail
-        # console.log 'proxy error', error
 
     getUserId: (email) ->
       md5 email?.toLowerCase()

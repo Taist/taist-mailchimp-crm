@@ -15,6 +15,8 @@ innerHTML += '\n.subscriptionsInfo { overflow: hidden; max-height: 0px; transiti
 
 innerHTML += '\n.subscriptionsInfo.isExpanded { max-height: 1000px; opacity: 1; transition: max-height .5s ease-in-out; }'
 
+innerHTML += '\n.subscriptionsInfo td { box-sizing: border-box; }'
+
 style.innerHTML = innerHTML
 document.getElementsByTagName('head')[0].appendChild style
 
