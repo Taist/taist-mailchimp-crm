@@ -72,14 +72,8 @@ addonEntry =
           container = document.getElementById id
           container.appendChild app.container
 
-        pageData = JSON.parse document.querySelector('#mapValues').value
-        fullName = pageData['Full Name']
-        firstName = pageData['First Name']
-        lastName = fullName.slice firstName.length + 1
-        email = pageData.priEmail
-        app.appAPI.setMember email, firstName, lastName
-
-        app.mailchimpAPI.getLists()
+          app.zohoAPI.setMember()
+          app.mailchimpAPI.getLists()
       .catch (error) ->
         console.log error
 

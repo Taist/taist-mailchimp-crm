@@ -55,11 +55,13 @@ app = {
   },
   actions: {
     onSubscribe: function(subscriptionId) {
+      app.zohoAPI.setMember();
       return app.mailchimpAPI.subscribe(subscriptionId, app.appAPI.getMember()).then(function() {
         return app.mailchimpAPI.getLists();
       });
     },
     onUnsubscribe: function(subscriptionId) {
+      app.zohoAPI.setMember();
       return app.mailchimpAPI.unsubscribe(subscriptionId, app.appAPI.getMember()).then(function() {
         return app.mailchimpAPI.getLists();
       });
@@ -86,6 +88,17 @@ app = {
     setError: function(errorMessage) {
       appData.error = errorMessage;
       return app.render();
+    }
+  },
+  zohoAPI: {
+    setMember: function() {
+      var email, firstName, fullName, lastName, pageData;
+      pageData = JSON.parse(document.querySelector('#mapValues').value);
+      fullName = pageData['Full Name'];
+      firstName = pageData['First Name'];
+      lastName = fullName.slice(firstName.length + 1);
+      email = pageData.priEmail;
+      return app.appAPI.setMember(email, firstName, lastName);
     }
   },
   mailchimpAPI: {
@@ -182,11 +195,13 @@ app = {
                 name: list.name
               }, listData));
               return app.render();
-            });
+            })["catch"](function() {});
           });
         };
       })(this))["catch"](function(error) {
-        return console.log('proxy error', error);
+        var responseBody;
+        responseBody = JSON.parse(error.response.body);
+        return app.appAPI.setError(responseBody.detail);
       });
     },
     getUserId: function(email) {
@@ -41818,20 +41833,14 @@ addonEntry = {
     }
     if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
       return app.mailchimpAPI.getCreds().then(function() {
-        var email, firstName, fullName, lastName, pageData;
-        app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
+        return app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
           var container, id;
           id = section.id.replace('emailspersonality_', '');
           container = document.getElementById(id);
-          return container.appendChild(app.container);
+          container.appendChild(app.container);
+          app.zohoAPI.setMember();
+          return app.mailchimpAPI.getLists();
         });
-        pageData = JSON.parse(document.querySelector('#mapValues').value);
-        fullName = pageData['Full Name'];
-        firstName = pageData['First Name'];
-        lastName = fullName.slice(firstName.length + 1);
-        email = pageData.priEmail;
-        app.appAPI.setMember(email, firstName, lastName);
-        return app.mailchimpAPI.getLists();
       })["catch"](function(error) {
         return console.log(error);
       });

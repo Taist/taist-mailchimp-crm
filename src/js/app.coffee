@@ -50,11 +50,13 @@ app =
 
   actions:
     onSubscribe: (subscriptionId) ->
+      app.zohoAPI.setMember()
       app.mailchimpAPI.subscribe subscriptionId, app.appAPI.getMember()
       .then ->
         app.mailchimpAPI.getLists()
 
     onUnsubscribe: (subscriptionId) ->
+      app.zohoAPI.setMember()
       app.mailchimpAPI.unsubscribe subscriptionId, app.appAPI.getMember()
       .then ->
         app.mailchimpAPI.getLists()
@@ -79,6 +81,15 @@ app =
     setError: (errorMessage) ->
       appData.error = errorMessage
       app.render()
+
+  zohoAPI:
+    setMember: ->
+      pageData = JSON.parse document.querySelector('#mapValues').value
+      fullName = pageData['Full Name']
+      firstName = pageData['First Name']
+      lastName = fullName.slice firstName.length + 1
+      email = pageData.priEmail
+      app.appAPI.setMember email, firstName, lastName
 
   mailchimpAPI:
     creds: {}
@@ -157,10 +168,13 @@ app =
           .then (listData) =>
             @insertSubscription extend { name: list.name }, listData
             app.render()
+          .catch ->
+            # just supress error
 
       .catch (error) ->
-        #Use stub instead of real function
-        console.log 'proxy error', error
+        responseBody = JSON.parse error.response.body
+        app.appAPI.setError responseBody.detail
+        # console.log 'proxy error', error
 
     getUserId: (email) ->
       md5 email?.toLowerCase()
