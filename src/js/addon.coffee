@@ -64,10 +64,6 @@ addonEntry =
       app.mailchimpAPI.getCreds()
       .then ->
         app.elementObserver.waitElement '[id^="emailspersonality_"]', (section) ->
-          # id = section.id.replace 'emailspersonality_', ''
-          # container = document.getElementById id
-          console.log 'UPDATE ZOHO INTERFACE'
-
           container = document.getElementById 'relatedPageContent'
           container.appendChild app.container
 

@@ -41829,7 +41829,6 @@ addonEntry = {
       return app.mailchimpAPI.getCreds().then(function() {
         return app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
           var container;
-          console.log('UPDATE ZOHO INTERFACE');
           container = document.getElementById('relatedPageContent');
           container.appendChild(app.container);
           app.zohoAPI.setMember();
