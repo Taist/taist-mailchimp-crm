@@ -12,10 +12,6 @@ injectTapEventPlugin = require 'react-tap-event-plugin'
 injectTapEventPlugin()
 
 MailchimpBlock = React.createFactory React.createClass
-  getInitialState: ->
-    isExpanded: true
-    selectValue: null
-
   #needed for mui ThemeManager
   childContextTypes:
     muiTheme: React.PropTypes.object
@@ -24,30 +20,29 @@ MailchimpBlock = React.createFactory React.createClass
   getChildContext: ->
     muiTheme: ThemeManager.getCurrentTheme()
 
-  onSubscribe: ->
-    if @state.selectValue
-      @props.actions.onSubscribe? @state.selectValue
+  onSubscribe: (listId) ->
+    @props.actions.onSubscribe? listId
 
-  onUnsubscribe: ->
-    if @state.selectValue
-      @props.actions.onUnsubscribe? @state.selectValue
-
-  onChangeMailchimpList: (event) ->
-    listId = event.target.value
-    @onSelectSubscription listId
-
-  onSelectSubscription: (listId) ->
-    @setState { selectValue: listId }
+  onUnsubscribe: (listId) ->
+    @props.actions.onUnsubscribe? listId
 
   onResetError: (event) ->
     @props.actions.onResetError?()
 
+  selectedRows: []
+
   render: ->
-    tableData = @props.data.lists?.map? (list) =>
+    @selectedRows = []
+    tableData = @props.data.lists?.map? (list, idx) =>
       subscriptions = @props.data.subscriptions?.filter? (s) ->
         s.list_id is list.id
+
+      if subscriptions[0]?.status is 'subscribed'
+        @selectedRows.push idx
+
       {
         selected: (subscriptions[0]?.status is 'subscribed')
+        listId: list.id
         name:
           style:
             paddingLeft: 0
@@ -68,17 +63,18 @@ MailchimpBlock = React.createFactory React.createClass
                 }, subscriptions[0].status
       }
 
-    console.log tableData
-
     React.createElement Paper, {
       zDepth: 1
       rounded: false
       style:
+        marginTop: 24
+        marginBottom: 48
         padding: 8
         boxSizing: 'content-box'
     },
       React.createElement List, {},
         React.createElement ListItem, {
+          disabled: true
           primaryText: 'Mailchimp subscriptions'
           leftIcon: React.createElement SvgIcon, {
             viewBox: '0 0 1792 1792'
@@ -106,14 +102,21 @@ MailchimpBlock = React.createFactory React.createClass
             }, path d: 'M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z'
           @props.data.error
 
-      React.createElement Table, {
-        columnOrder: ['name']
-        rowData: tableData
-        selectable: true
-        multiSelectable: true
-        preScanRowData: true
-        deselectOnClickaway: false
-        showRowHover: true
-      }
+      div { className: 'subscriptionsInfo' },
+        React.createElement Table, {
+          columnOrder: ['name']
+          rowData: tableData
+          selectable: true
+          multiSelectable: true
+          preScanRowData: true
+          deselectOnClickaway: false
+          showRowHover: true
+          onCellClick: (row, column) =>
+            tableData[row].selected = !tableData[row].selected
+            if tableData[row].selected
+              @onSubscribe tableData[row].listId
+            else
+              @onUnsubscribe tableData[row].listId
+        }
 
 module.exports = MailchimpBlock

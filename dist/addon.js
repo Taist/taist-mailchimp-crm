@@ -342,12 +342,6 @@ injectTapEventPlugin = require('react-tap-event-plugin');
 injectTapEventPlugin();
 
 MailchimpBlock = React.createFactory(React.createClass({
-  getInitialState: function() {
-    return {
-      isExpanded: true,
-      selectValue: null
-    };
-  },
   childContextTypes: {
     muiTheme: React.PropTypes.object
   },
@@ -356,47 +350,39 @@ MailchimpBlock = React.createFactory(React.createClass({
       muiTheme: ThemeManager.getCurrentTheme()
     };
   },
-  onSubscribe: function() {
+  onSubscribe: function(listId) {
     var base;
-    if (this.state.selectValue) {
-      return typeof (base = this.props.actions).onSubscribe === "function" ? base.onSubscribe(this.state.selectValue) : void 0;
-    }
+    return typeof (base = this.props.actions).onSubscribe === "function" ? base.onSubscribe(listId) : void 0;
   },
-  onUnsubscribe: function() {
+  onUnsubscribe: function(listId) {
     var base;
-    if (this.state.selectValue) {
-      return typeof (base = this.props.actions).onUnsubscribe === "function" ? base.onUnsubscribe(this.state.selectValue) : void 0;
-    }
-  },
-  onChangeMailchimpList: function(event) {
-    var listId;
-    listId = event.target.value;
-    return this.onSelectSubscription(listId);
-  },
-  onSelectSubscription: function(listId) {
-    return this.setState({
-      selectValue: listId
-    });
+    return typeof (base = this.props.actions).onUnsubscribe === "function" ? base.onUnsubscribe(listId) : void 0;
   },
   onResetError: function(event) {
     var base;
     return typeof (base = this.props.actions).onResetError === "function" ? base.onResetError() : void 0;
   },
+  selectedRows: [],
   render: function() {
     var ref1, tableData;
+    this.selectedRows = [];
     tableData = (ref1 = this.props.data.lists) != null ? typeof ref1.map === "function" ? ref1.map((function(_this) {
-      return function(list) {
-        var ref2, ref3, ref4, subscriptions;
+      return function(list, idx) {
+        var ref2, ref3, ref4, ref5, subscriptions;
         subscriptions = (ref2 = _this.props.data.subscriptions) != null ? typeof ref2.filter === "function" ? ref2.filter(function(s) {
           return s.list_id === list.id;
         }) : void 0 : void 0;
+        if (((ref3 = subscriptions[0]) != null ? ref3.status : void 0) === 'subscribed') {
+          _this.selectedRows.push(idx);
+        }
         return {
-          selected: ((ref3 = subscriptions[0]) != null ? ref3.status : void 0) === 'subscribed',
+          selected: ((ref4 = subscriptions[0]) != null ? ref4.status : void 0) === 'subscribed',
+          listId: list.id,
           name: {
             style: {
               paddingLeft: 0
             },
-            content: div({}, div({}, list.name), ((ref4 = subscriptions[0]) != null ? ref4.status : void 0) != null ? div({
+            content: div({}, div({}, list.name), ((ref5 = subscriptions[0]) != null ? ref5.status : void 0) != null ? div({
               style: {
                 fontSize: 14,
                 fontStyle: 'normal',
@@ -412,15 +398,17 @@ MailchimpBlock = React.createFactory(React.createClass({
         };
       };
     })(this)) : void 0 : void 0;
-    console.log(tableData);
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
       style: {
+        marginTop: 24,
+        marginBottom: 48,
         padding: 8,
         boxSizing: 'content-box'
       }
     }, React.createElement(List, {}, React.createElement(ListItem, {
+      disabled: true,
       primaryText: 'Mailchimp subscriptions',
       leftIcon: React.createElement(SvgIcon, {
         viewBox: '0 0 1792 1792'
@@ -451,15 +439,27 @@ MailchimpBlock = React.createFactory(React.createClass({
       }
     }, path({
       d: 'M1490 1322q0 40-28 68l-136 136q-28 28-68 28t-68-28l-294-294-294 294q-28 28-68 28t-68-28l-136-136q-28-28-28-68t28-68l294-294-294-294q-28-28-28-68t28-68l136-136q28-28 68-28t68 28l294 294 294-294q28-28 68-28t68 28l136 136q28 28 28 68t-28 68l-294 294 294 294q28 28 28 68z'
-    }))), this.props.data.error) : void 0, React.createElement(Table, {
+    }))), this.props.data.error) : void 0, div({
+      className: 'subscriptionsInfo'
+    }, React.createElement(Table, {
       columnOrder: ['name'],
       rowData: tableData,
       selectable: true,
       multiSelectable: true,
       preScanRowData: true,
       deselectOnClickaway: false,
-      showRowHover: true
-    }));
+      showRowHover: true,
+      onCellClick: (function(_this) {
+        return function(row, column) {
+          tableData[row].selected = !tableData[row].selected;
+          if (tableData[row].selected) {
+            return _this.onSubscribe(tableData[row].listId);
+          } else {
+            return _this.onUnsubscribe(tableData[row].listId);
+          }
+        };
+      })(this)
+    })));
   }
 }));
 
@@ -41743,15 +41743,9 @@ style.type = 'text/css';
 
 innerHTML = '';
 
-innerHTML += '\n.zohoContainer { margin-left: 2.5%; padding-top: 8px; width: 95%; }';
+innerHTML += '\n.zohoContainer { margin-left: 2.5%; padding-top: 8px; width: 95%; box-sizing: border-box; }';
 
 innerHTML += '\n.zohoContainer * { font-size: 16px; font-family: "Roboto", sans-serif; }';
-
-innerHTML += '\n.selectFieldWrapper div[tabindex="0"] div { text-overflow: ellipsis; overflow-x: hidden; }';
-
-innerHTML += '\n.subscriptionsInfo { overflow: hidden; max-height: 0px; transition: max-height .5s ease-in-out; }';
-
-innerHTML += '\n.subscriptionsInfo.isExpanded { max-height: 1000px; opacity: 1; transition: max-height .5s ease-in-out; }';
 
 innerHTML += '\n.subscriptionsInfo td { box-sizing: border-box; }';
 
@@ -41818,9 +41812,8 @@ addonEntry = {
     if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
       return app.mailchimpAPI.getCreds().then(function() {
         return app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
-          var container, id;
-          id = section.id.replace('emailspersonality_', '');
-          container = document.getElementById(id);
+          var container;
+          container = document.getElementById('relatedPageContent');
           container.appendChild(app.container);
           app.zohoAPI.setMember();
           return app.mailchimpAPI.getLists();

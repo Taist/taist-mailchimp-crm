@@ -6,14 +6,8 @@ style.type = 'text/css'
 innerHTML = ''
 
 # zoho styles
-innerHTML += '\n.zohoContainer { margin-left: 2.5%; padding-top: 8px; width: 95%; }'
+innerHTML += '\n.zohoContainer { margin-left: 2.5%; padding-top: 8px; width: 95%; box-sizing: border-box; }'
 innerHTML += '\n.zohoContainer * { font-size: 16px; font-family: "Roboto", sans-serif; }'
-
-innerHTML += '\n.selectFieldWrapper div[tabindex="0"] div { text-overflow: ellipsis; overflow-x: hidden; }'
-
-innerHTML += '\n.subscriptionsInfo { overflow: hidden; max-height: 0px; transition: max-height .5s ease-in-out; }'
-
-innerHTML += '\n.subscriptionsInfo.isExpanded { max-height: 1000px; opacity: 1; transition: max-height .5s ease-in-out; }'
 
 innerHTML += '\n.subscriptionsInfo td { box-sizing: border-box; }'
 
@@ -70,8 +64,9 @@ addonEntry =
       app.mailchimpAPI.getCreds()
       .then ->
         app.elementObserver.waitElement '[id^="emailspersonality_"]', (section) ->
-          id = section.id.replace 'emailspersonality_', ''
-          container = document.getElementById id
+          # id = section.id.replace 'emailspersonality_', ''
+          # container = document.getElementById id
+          container = document.getElementById 'relatedPageContent'
           container.appendChild app.container
 
           app.zohoAPI.setMember()
