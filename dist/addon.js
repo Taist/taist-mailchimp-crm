@@ -23,6 +23,7 @@ app = {
   exapi: {},
   container: null,
   init: function(api) {
+    var div;
     app.api = api;
     app.exapi.setUserData = Q.nbind(api.userData.set, api.userData);
     app.exapi.getUserData = Q.nbind(api.userData.get, api.userData);
@@ -30,7 +31,7 @@ app = {
     app.exapi.getCompanyData = Q.nbind(api.companyData.get, api.companyData);
     app.exapi.setPartOfCompanyData = Q.nbind(api.companyData.setPart, api.companyData);
     app.exapi.getPartOfCompanyData = Q.nbind(api.companyData.getPart, api.companyData);
-    return app.exapi.updateCompanyData = function(key, newData) {
+    app.exapi.updateCompanyData = function(key, newData) {
       return app.exapi.getCompanyData(key).then(function(storedData) {
         var updatedData;
         updatedData = {};
@@ -40,6 +41,9 @@ app = {
         });
       });
     };
+    div = document.createElement('div');
+    div.className = 'zohoContainer';
+    return app.container = div;
   },
   render: function() {
     var MailchimpBlock;
@@ -337,6 +341,19 @@ ThemeManager.setTheme(ThemeManager.types.LIGHT);
 
 Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon, List = mui.List, ListItem = mui.ListItem, Table = mui.Table;
 
+Table.prototype.componentWillReceiveProps = function() {
+  var selectedRows;
+  selectedRows = [];
+  this.props.rowData.forEach(function(row, idx) {
+    if (row.selected === true) {
+      return selectedRows.push(idx);
+    }
+  });
+  return this.setState({
+    selectedRows: selectedRows
+  });
+};
+
 injectTapEventPlugin = require('react-tap-event-plugin');
 
 injectTapEventPlugin();
@@ -362,27 +379,22 @@ MailchimpBlock = React.createFactory(React.createClass({
     var base;
     return typeof (base = this.props.actions).onResetError === "function" ? base.onResetError() : void 0;
   },
-  selectedRows: [],
   render: function() {
     var ref1, tableData, userInfo;
-    this.selectedRows = [];
     tableData = (ref1 = this.props.data.lists) != null ? typeof ref1.map === "function" ? ref1.map((function(_this) {
       return function(list, idx) {
-        var ref2, ref3, ref4, ref5, subscriptions;
+        var ref2, ref3, ref4, subscriptions;
         subscriptions = (ref2 = _this.props.data.subscriptions) != null ? typeof ref2.filter === "function" ? ref2.filter(function(s) {
           return s.list_id === list.id;
         }) : void 0 : void 0;
-        if (((ref3 = subscriptions[0]) != null ? ref3.status : void 0) === 'subscribed') {
-          _this.selectedRows.push(idx);
-        }
         return {
-          selected: ((ref4 = subscriptions[0]) != null ? ref4.status : void 0) === 'subscribed',
+          selected: ((ref3 = subscriptions[0]) != null ? ref3.status : void 0) === 'subscribed',
           listId: list.id,
           name: {
             style: {
               paddingLeft: 0
             },
-            content: div({}, div({}, list.name), ((ref5 = subscriptions[0]) != null ? ref5.status : void 0) != null ? div({
+            content: div({}, div({}, list.name), ((ref4 = subscriptions[0]) != null ? ref4.status : void 0) != null ? div({
               style: {
                 fontSize: 14,
                 fontStyle: 'normal',
@@ -41816,11 +41828,8 @@ addonEntry = {
     if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
       return app.mailchimpAPI.getCreds().then(function() {
         return app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
-          var container, div;
+          var container;
           console.log('UPDATE ZOHO INTERFACE');
-          div = document.createElement('div');
-          div.className = 'zohoContainer';
-          app.container = div;
           container = document.getElementById('relatedPageContent');
           container.appendChild(app.container);
           app.zohoAPI.setMember();

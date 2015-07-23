@@ -8,6 +8,13 @@ ThemeManager.setTheme ThemeManager.types.LIGHT
 
 { Paper, RaisedButton, SelectField, SvgIcon, List, ListItem, Table } = mui
 
+Table.prototype.componentWillReceiveProps = ->
+  selectedRows = []
+  @props.rowData.forEach (row, idx) ->
+    if row.selected is true
+      selectedRows.push idx
+  @setState { selectedRows }
+
 injectTapEventPlugin = require 'react-tap-event-plugin'
 injectTapEventPlugin()
 
@@ -29,16 +36,10 @@ MailchimpBlock = React.createFactory React.createClass
   onResetError: (event) ->
     @props.actions.onResetError?()
 
-  selectedRows: []
-
   render: ->
-    @selectedRows = []
     tableData = @props.data.lists?.map? (list, idx) =>
       subscriptions = @props.data.subscriptions?.filter? (s) ->
         s.list_id is list.id
-
-      if subscriptions[0]?.status is 'subscribed'
-        @selectedRows.push idx
 
       {
         selected: (subscriptions[0]?.status is 'subscribed')

@@ -40,6 +40,10 @@ app =
         .then ->
           updatedData
 
+    div = document.createElement 'div'
+    div.className = 'zohoContainer'
+    app.container = div
+
   render: ->
     MailchimpBlock = require './react/mailchimpBlock'
     React.render ( MailchimpBlock data: appData, actions: app.actions, user: app.zohoAPI.setMember() ), app.container
