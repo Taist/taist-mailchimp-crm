@@ -79,7 +79,7 @@ app = {
     setMember: function(email, firstName, lastName) {
       return this.member = {
         email_address: email,
-        marge_fields: {
+        merge_fields: {
           FNAME: firstName,
           LNAME: lastName
         }
@@ -398,6 +398,7 @@ MailchimpBlock = React.createFactory(React.createClass({
         };
       };
     })(this)) : void 0 : void 0;
+    console.log(this.props.data.subscriptions);
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
@@ -41774,12 +41775,12 @@ updateMailchimpInterface = function() {
   return app.mailchimpAPI.getCreds().then(function(creds) {
     return [].slice.call(document.querySelectorAll('.taistAPIKey')).forEach(function(link) {
       if ((creds != null ? creds.APIKey : void 0) === link.dataset.apikey) {
-        link.innerText = 'Disable Taist integration';
+        link.innerText = 'Disable Zoho CRM integration';
         return link.onclick = function() {
           return updateMailchimpKey('disable', link.dataset.apikey);
         };
       } else {
-        link.innerText = 'Use for Taist integration';
+        link.innerText = 'Enable Zoho CRM integration';
         return link.onclick = function() {
           return updateMailchimpKey('enable', link.dataset.apikey);
         };

@@ -63,6 +63,8 @@ MailchimpBlock = React.createFactory React.createClass
                 }, subscriptions[0].status
       }
 
+    console.log @props.data.subscriptions
+
     React.createElement Paper, {
       zDepth: 1
       rounded: false

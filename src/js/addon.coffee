@@ -31,10 +31,10 @@ updateMailchimpInterface = ->
   .then (creds) ->
     [].slice.call(document.querySelectorAll '.taistAPIKey').forEach (link) ->
       if creds?.APIKey is link.dataset.apikey
-        link.innerText = 'Disable Taist integration'
+        link.innerText = 'Disable Zoho CRM integration'
         link.onclick = -> updateMailchimpKey 'disable', link.dataset.apikey
       else
-        link.innerText = 'Use for Taist integration'
+        link.innerText = 'Enable Zoho CRM integration'
         link.onclick = -> updateMailchimpKey 'enable', link.dataset.apikey
 
 addonEntry =

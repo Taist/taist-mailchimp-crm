@@ -74,7 +74,7 @@ app =
     setMember: (email, firstName, lastName) ->
       @member =
         email_address: email
-        marge_fields:
+        merge_fields:
           FNAME: firstName
           LNAME: lastName
 
