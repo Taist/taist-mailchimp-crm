@@ -40,13 +40,9 @@ app =
         .then ->
           updatedData
 
-    div = document.createElement 'div'
-    div.className = 'zohoContainer'
-    app.container = div
-
   render: ->
     MailchimpBlock = require './react/mailchimpBlock'
-    React.render ( MailchimpBlock data: appData, actions: app.actions ), app.container
+    React.render ( MailchimpBlock data: appData, actions: app.actions, user: app.zohoAPI.setMember() ), app.container
 
   actions:
     onSubscribe: (subscriptionId) ->
@@ -85,10 +81,10 @@ app =
   zohoAPI:
     setMember: ->
       pageData = JSON.parse document.querySelector('#mapValues').value
-      fullName = pageData['Full Name']
-      firstName = pageData['First Name']
+      fullName = pageData['Full Name'] or ""
+      firstName = pageData['First Name'] or ""
       lastName = fullName.slice firstName.length + 1
-      email = pageData.priEmail
+      email = pageData.priEmail or ""
       app.appAPI.setMember email, firstName, lastName
 
   mailchimpAPI:
@@ -154,6 +150,8 @@ app =
 
 
     getLists: ->
+      appData.subscriptions = []
+
       unless @creds?.APIKey?
         app.appAPI.setError 'Please setup Mailchimp API key to start'
         return Q.resolve()
@@ -169,8 +167,12 @@ app =
               @insertSubscription extend { name: list.name }, listData
             .catch ->
               # just supress error
-          ).then () ->
+          )
+          .then () ->
             # console.log 'before render', appData
+            app.render()
+          .catch (error) ->
+            # console.log error
             app.render()
 
       .catch (error) ->

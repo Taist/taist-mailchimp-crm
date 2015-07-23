@@ -66,6 +66,13 @@ addonEntry =
         app.elementObserver.waitElement '[id^="emailspersonality_"]', (section) ->
           # id = section.id.replace 'emailspersonality_', ''
           # container = document.getElementById id
+          console.log 'UPDATE ZOHO INTERFACE'
+
+          # Moved it here because table doesn't update selection properly 
+          div = document.createElement 'div'
+          div.className = 'zohoContainer'
+          app.container = div
+
           container = document.getElementById 'relatedPageContent'
           container.appendChild app.container
 

@@ -23,7 +23,6 @@ app = {
   exapi: {},
   container: null,
   init: function(api) {
-    var div;
     app.api = api;
     app.exapi.setUserData = Q.nbind(api.userData.set, api.userData);
     app.exapi.getUserData = Q.nbind(api.userData.get, api.userData);
@@ -31,7 +30,7 @@ app = {
     app.exapi.getCompanyData = Q.nbind(api.companyData.get, api.companyData);
     app.exapi.setPartOfCompanyData = Q.nbind(api.companyData.setPart, api.companyData);
     app.exapi.getPartOfCompanyData = Q.nbind(api.companyData.getPart, api.companyData);
-    app.exapi.updateCompanyData = function(key, newData) {
+    return app.exapi.updateCompanyData = function(key, newData) {
       return app.exapi.getCompanyData(key).then(function(storedData) {
         var updatedData;
         updatedData = {};
@@ -41,16 +40,14 @@ app = {
         });
       });
     };
-    div = document.createElement('div');
-    div.className = 'zohoContainer';
-    return app.container = div;
   },
   render: function() {
     var MailchimpBlock;
     MailchimpBlock = require('./react/mailchimpBlock');
     return React.render(MailchimpBlock({
       data: appData,
-      actions: app.actions
+      actions: app.actions,
+      user: app.zohoAPI.setMember()
     }), app.container);
   },
   actions: {
@@ -94,10 +91,10 @@ app = {
     setMember: function() {
       var email, firstName, fullName, lastName, pageData;
       pageData = JSON.parse(document.querySelector('#mapValues').value);
-      fullName = pageData['Full Name'];
-      firstName = pageData['First Name'];
+      fullName = pageData['Full Name'] || "";
+      firstName = pageData['First Name'] || "";
       lastName = fullName.slice(firstName.length + 1);
-      email = pageData.priEmail;
+      email = pageData.priEmail || "";
       return app.appAPI.setMember(email, firstName, lastName);
     }
   },
@@ -181,6 +178,7 @@ app = {
     },
     getLists: function() {
       var ref;
+      appData.subscriptions = [];
       if (((ref = this.creds) != null ? ref.APIKey : void 0) == null) {
         app.appAPI.setError('Please setup Mailchimp API key to start');
         return Q.resolve();
@@ -194,6 +192,8 @@ app = {
                 name: list.name
               }, listData));
             })["catch"](function() {})).then(function() {
+              return app.render();
+            })["catch"](function(error) {
               return app.render();
             });
           });
@@ -323,11 +323,11 @@ DOMObserver = (function() {
 module.exports = DOMObserver;
 
 },{}],3:[function(require,module,exports){
-var List, ListDivider, ListItem, MailchimpBlock, Paper, RaisedButton, React, SelectField, SvgIcon, Table, ThemeManager, button, div, injectTapEventPlugin, mui, path, ref;
+var List, ListItem, MailchimpBlock, Paper, RaisedButton, React, SelectField, SvgIcon, Table, ThemeManager, b, button, div, injectTapEventPlugin, mui, path, ref, span;
 
 React = require('react');
 
-ref = React.DOM, div = ref.div, button = ref.button, path = ref.path;
+ref = React.DOM, div = ref.div, button = ref.button, path = ref.path, span = ref.span, b = ref.b;
 
 mui = require('material-ui');
 
@@ -335,7 +335,7 @@ ThemeManager = new mui.Styles.ThemeManager();
 
 ThemeManager.setTheme(ThemeManager.types.LIGHT);
 
-Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon, List = mui.List, ListItem = mui.ListItem, ListDivider = mui.ListDivider, Table = mui.Table;
+Paper = mui.Paper, RaisedButton = mui.RaisedButton, SelectField = mui.SelectField, SvgIcon = mui.SvgIcon, List = mui.List, ListItem = mui.ListItem, Table = mui.Table;
 
 injectTapEventPlugin = require('react-tap-event-plugin');
 
@@ -364,7 +364,7 @@ MailchimpBlock = React.createFactory(React.createClass({
   },
   selectedRows: [],
   render: function() {
-    var ref1, tableData;
+    var ref1, tableData, userInfo;
     this.selectedRows = [];
     tableData = (ref1 = this.props.data.lists) != null ? typeof ref1.map === "function" ? ref1.map((function(_this) {
       return function(list, idx) {
@@ -398,7 +398,9 @@ MailchimpBlock = React.createFactory(React.createClass({
         };
       };
     })(this)) : void 0 : void 0;
-    console.log(this.props.data.subscriptions);
+    userInfo = this.props.user.merge_fields.FNAME + " ";
+    userInfo += "" + this.props.user.merge_fields.LNAME;
+    userInfo += ", " + this.props.user.email_address;
     return React.createElement(Paper, {
       zDepth: 1,
       rounded: false,
@@ -410,7 +412,7 @@ MailchimpBlock = React.createFactory(React.createClass({
       }
     }, React.createElement(List, {}, React.createElement(ListItem, {
       disabled: true,
-      primaryText: 'Mailchimp subscriptions',
+      primaryText: span({}, 'Mailchimp lists for ', b({}, userInfo)),
       leftIcon: React.createElement(SvgIcon, {
         viewBox: '0 0 1792 1792'
       }, path({
@@ -421,7 +423,8 @@ MailchimpBlock = React.createFactory(React.createClass({
       rounded: false,
       style: {
         position: 'relative',
-        padding: 8
+        padding: 8,
+        marginBottom: 8
       }
     }, div({
       style: {
@@ -41813,7 +41816,11 @@ addonEntry = {
     if (location.href.match(/crm\.zoho\.com\/crm\//i)) {
       return app.mailchimpAPI.getCreds().then(function() {
         return app.elementObserver.waitElement('[id^="emailspersonality_"]', function(section) {
-          var container;
+          var container, div;
+          console.log('UPDATE ZOHO INTERFACE');
+          div = document.createElement('div');
+          div.className = 'zohoContainer';
+          app.container = div;
           container = document.getElementById('relatedPageContent');
           container.appendChild(app.container);
           app.zohoAPI.setMember();
