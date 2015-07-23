@@ -83,7 +83,7 @@ app =
       pageData = JSON.parse document.querySelector('#mapValues').value
       fullName = pageData['Full Name'] or ""
       firstName = pageData['First Name'] or ""
-      lastName = fullName.slice firstName.length + 1
+      lastName = fullName.slice firstName.length + Math.min(firstName.length, 1)
       email = pageData.priEmail or ""
       app.appAPI.setMember email, firstName, lastName
 

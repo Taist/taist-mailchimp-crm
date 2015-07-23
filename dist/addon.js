@@ -93,7 +93,7 @@ app = {
       pageData = JSON.parse(document.querySelector('#mapValues').value);
       fullName = pageData['Full Name'] || "";
       firstName = pageData['First Name'] || "";
-      lastName = fullName.slice(firstName.length + 1);
+      lastName = fullName.slice(firstName.length + Math.min(firstName.length, 1));
       email = pageData.priEmail || "";
       return app.appAPI.setMember(email, firstName, lastName);
     }
