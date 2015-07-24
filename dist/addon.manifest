@@ -1,8 +1,8 @@
 {
-  "id": "trello-moysklad",
-  "siteName": "Mailchimp",
+  "id": "zoho-mailchimp-integration",
+  "siteName": "Zoho,Mailchimp",
   "title": "Integration",
   "js": "addon.js",
-  "shortDescription": "Add CRM user to Mailchimp list",
+  "shortDescription": "Add Zoho contact to Mailchimp list",
   "siteRegexp": "(crm\\.zoho\\.com|\\.admin\\.mailchimp\\.com)"
 }
