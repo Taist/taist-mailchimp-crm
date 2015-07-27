@@ -3,6 +3,6 @@
   "siteName": "Zoho, Mailchimp",
   "title": "Integration",
   "js": "addon.js",
-  "shortDescription": "Add Zoho contact to Mailchimp list",
+  "shortDescription": "Add Zoho contacts to Mailchimp lists",
   "siteRegexp": "(crm\\.zoho\\.com|\\.admin\\.mailchimp\\.com)"
 }
