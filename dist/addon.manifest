@@ -1,6 +1,6 @@
 {
   "id": "zoho-mailchimp-integration",
-  "siteName": "Zoho,Mailchimp",
+  "siteName": "Zoho, Mailchimp",
   "title": "Integration",
   "js": "addon.js",
   "shortDescription": "Add Zoho contact to Mailchimp list",
