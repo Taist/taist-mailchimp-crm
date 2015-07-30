@@ -5,4 +5,5 @@
   "js": "addon.js",
   "shortDescription": "Add Zoho contacts to Mailchimp lists",
   "siteRegexp": "(crm\\.zoho\\.com|\\.admin\\.mailchimp\\.com)"
+  "description": "./addon-description.md"
 }
